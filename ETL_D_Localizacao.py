@@ -1,5 +1,6 @@
 import numpy as np
 import CONNECTION as con
+import STAGES as stg
 import pandas as pd
 
 connection_postgre = con.create_connection_postgre('localhost', 'projetodw',
@@ -23,14 +24,26 @@ estado_cod = dados_ibge.query('Nível == "UF"')
 del dimensao_localizacao['Nível']
 del estado_cod['Nível']
 
-dimensao_localizacao['no_município'] = list(map(lambda x : x[0:-5],
+print(dimensao_localizacao)
+
+dimensao_localizacao['no_uf'] = list(map(lambda x : x[-3:-1],
                                                 dimensao_localizacao['no_município']))
 
-dimensao_localizacao['cd_estado'] = list(map(lambda x : x[0:2],
+dimensao_localizacao['no_município'] = list(map(lambda x : x[:-5],
+                                                dimensao_localizacao['no_município']))
+
+dimensao_localizacao['cd_estado'] = list(map(lambda x : x[:2],
                                              dimensao_localizacao['cd_município']))
 
 estado_cod = estado_cod.rename(columns={'no_município' : 'no_estado'})
 
-dimensao_localizacao.merge(estado_cod, left_on='cd_estado',right_on='cd_município')
+dimensao_localizacao = dimensao_localizacao.merge(estado_cod, left_on='cd_estado',
+                                                right_on='cd_município')
 
-print(estado_cod)
+del dimensao_localizacao['cd_município_y']
+
+dimensao_localizacao = dimensao_localizacao.rename(columns={'cd_município_x' :
+                                                                'cd_município'})
+
+stg.create_stg_table_from_dataframe(dimensao_localizacao, connection_postgre,
+                                    'D_Localização')
