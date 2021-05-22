@@ -24,8 +24,6 @@ estado_cod = dados_ibge.query('Nível == "UF"')
 del dimensao_localizacao['Nível']
 del estado_cod['Nível']
 
-print(dimensao_localizacao)
-
 dimensao_localizacao['no_uf'] = list(map(lambda x : x[-3:-1],
                                                 dimensao_localizacao['no_município']))
 
