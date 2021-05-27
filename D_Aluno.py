@@ -1,23 +1,26 @@
-import CONNECTION as con
+import CONEXAO as con
 import STAGES as stg
 import pandas as pd
 import numpy as np
 
 connection_postgre = con.create_connection_postgre('localhost', 'projetodw',
                                                       'postgres', 'itix.123', '5432')
-sql_aluno = '''
-select "ID_ALUNO", "ID_TURMA", "ID_SERIE", "ID_TURNO", "IN_SITUACAO_CENSO"
-FROM "STAGED".resultado_aluno
-'''
 
-dimensao_aluno = pd.read_sql_query(sql_aluno, connection_postgre)
-dimensao_aluno.index.name = 'sk_aluno'
+def extract_dim_aluno(conn):
 
-dimensao_aluno = dimensao_aluno.rename(columns={'ID_ALUNO' : 'cd_aluno',
+    sql_aluno = '''
+    select "ID_ALUNO", "ID_TURMA", "ID_SERIE", "ID_TURNO", "IN_SITUACAO_CENSO"
+    FROM "STAGED".resultado_aluno
+    '''
+
+    dim = pd.read_sql_query(sql_aluno, connection_postgre)
+    dim.index.name = 'sk_aluno'
+
+    dim = dimensao_aluno.rename(columns={'ID_ALUNO' : 'cd_aluno',
                 'ID_TURMA' : 'cd_turma', 'ID_SERIE' : 'cd_série' ,'ID_TURNO' : 'cd_turno',
                                             'IN_SITUACAO_CENSO' : 'fl_situação_censo'})
-
-#cd_turno contém valores vazios
+    #cd_turno contém valores vazios
+    return dim
 
 dimensao_aluno['cd_turno']= list(map(lambda x : '-1' if x == ' ' else x,
                                      dimensao_aluno['cd_turno']))

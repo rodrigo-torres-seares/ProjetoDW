@@ -1,4 +1,4 @@
-import CONNECTION as con
+import CONEXAO as con
 import pandas as pd
 import STAGES as stg
 import numpy as np
