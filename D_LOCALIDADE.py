@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 
 
 def extract_dim_localidade(conn):
@@ -47,13 +48,20 @@ def load_dim_localidade(dim_localidade, conn):
     dim_localidade.to_sql(name='D_LOCALIDADE', con=conn, schema='DW',
         if_exists='replace',
         index=False,
-        chunksize=100)
+        chunksize=40)
 
 
 def run_dim_localidade(conn_output):
-
+    start_time = time.time()
     município_tbl, estado_tbl = extract_dim_localidade(conn_output)
+    extract_time = time.time()
 
     dim_localidade = treat_dim_localidade(município_tbl, estado_tbl)
+    treat_time = time.time()
 
     load_dim_localidade(dim_localidade, conn_output)
+    load_time = time.time()
+
+    print('"D_LOCALIDADE" - extract: ', extract_time - start_time,
+          'treat: ', treat_time - extract_time,
+          'load: ', load_time - treat_time)

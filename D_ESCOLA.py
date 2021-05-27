@@ -53,6 +53,6 @@ def run_dim_escola(conn):
     load_dim_escola(dim_escola, conn)
     load_time = time.time()
 
-    print('extract: ', extract_time - start_time,
+    print('"D_ESCOLA" - extract: ', extract_time - start_time,
           'treat: ', treat_time - extract_time,
           'load: ', load_time - treat_time)
