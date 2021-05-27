@@ -28,3 +28,4 @@ dimensao_escola['ds_localização'] = list(map(lambda x :
                                              np.nan, dimensao_escola['cd_localização']))
 
 stg.create_stg_table_from_dataframe(dimensao_escola, connection_postgre, 'D_Escola')
+
