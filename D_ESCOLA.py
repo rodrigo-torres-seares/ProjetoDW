@@ -1,3 +1,5 @@
+import time
+
 import pandas as pd
 import numpy as np
 
@@ -13,23 +15,22 @@ def extract_dim_escola(conn):
 
 
 def treat_dim_escola(escola_tbl):
-    escola_tbl = escola_tbl.rename(columns={'PK_COD_ENTIDADE': 'cd_escola',
-                                    'NO_ENTIDADE': 'no_escola',
-                                    'ID_DEPENDENCIA_ADM': 'cd_dependência_administrativa',
-                                    'ID_LOCALIZACAO': 'cd_localização'})
+    escola_tbl = escola_tbl.rename(columns={'PK_COD_ENTIDADE': 'CD_ESCOLA',
+                                    'NO_ENTIDADE': 'NO_ESCOLA',
+                                    'ID_DEPENDENCIA_ADM': 'CD_DEPENDÊNCIA_ADMINISTRATIVA',
+                                    'ID_LOCALIZACAO': 'CD_LOCALIZAÇÃO'})
 
-    escola_tbl['ds_dependência_administrativa'] = list(map(lambda x:
-                                                           'Federal' if x == 1 else
-                                                           'Estadual' if x == 2 else
-                                                           'Municipal' if x == 3 else
-                                    np.nan, escola_tbl['cd_dependência_administrativa']))
+    escola_tbl['CD_DEPENDÊNCIA_ADMINISTRATIVA'] = escola_tbl[
+        'CD_DEPENDÊNCIA_ADMINISTRATIVA'].apply(lambda x: 'Federal' if x == 1 else
+        'Estadual' if x == 2 else
+        'Municipal' if x == 3 else
+        'Privada' if x == 4 else -1)
 
-    escola_tbl['ds_localização'] = list(map(lambda x:
-                                            'Urbana' if x == 1 else
-                                            'Rural' if x == 2 else
-                                            np.nan, escola_tbl['cd_localização']))
+    escola_tbl['DS_LOCALIZAÇÃO'] = escola_tbl[
+        'CD_LOCALIZAÇÃO'].apply(lambda x: 'Urbana' if x == 1 else
+        'Rural' if x == 2 else -1)
 
-    escola_tbl['sk_escola'] = np.arange(0, len(escola_tbl))
+    escola_tbl['SK_ESCOLA'] = np.arange(0, len(escola_tbl))
 
     return escola_tbl
 
@@ -38,10 +39,20 @@ def load_dim_escola(dim_escola, conn):
     dim_escola.to_sql(name='D_ESCOLA', con=conn, schema='DW',
                       if_exists='replace',
                       index=False,
-                      chunksize=100)
+                      chunksize=40)
 
 
 def run_dim_escola(conn):
+    start_time = time.time()
     escola_tbl = extract_dim_escola(conn)
+    extract_time = time.time()
+
     dim_escola = treat_dim_escola(escola_tbl)
+    treat_time = time.time()
+
     load_dim_escola(dim_escola, conn)
+    load_time = time.time()
+
+    print('extract: ', extract_time - start_time,
+          'treat: ', treat_time - extract_time,
+          'load: ', load_time - treat_time)
