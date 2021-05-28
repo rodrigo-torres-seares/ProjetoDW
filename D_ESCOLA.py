@@ -16,9 +16,9 @@ def extract_dim_escola(conn):
 
 def treat_dim_escola(escola_tbl):
     escola_tbl = escola_tbl.rename(columns={'PK_COD_ENTIDADE': 'CD_ESCOLA',
-                                    'NO_ENTIDADE': 'NO_ESCOLA',
-                                    'ID_DEPENDENCIA_ADM': 'CD_DEPENDÊNCIA_ADMINISTRATIVA',
-                                    'ID_LOCALIZACAO': 'CD_LOCALIZAÇÃO'})
+         'NO_ENTIDADE': 'NO_ESCOLA',
+         'ID_DEPENDENCIA_ADM': 'CD_DEPENDÊNCIA_ADMINISTRATIVA',
+         'ID_LOCALIZACAO': 'CD_LOCALIZAÇÃO'})
 
     escola_tbl['CD_DEPENDÊNCIA_ADMINISTRATIVA'] = escola_tbl[
         'CD_DEPENDÊNCIA_ADMINISTRATIVA'].apply(lambda x: 'Federal' if x == 1 else
@@ -30,16 +30,16 @@ def treat_dim_escola(escola_tbl):
         'CD_LOCALIZAÇÃO'].apply(lambda x: 'Urbana' if x == 1 else
         'Rural' if x == 2 else -1)
 
-    escola_tbl['SK_ESCOLA'] = np.arange(1, len(escola_tbl))
+    escola_tbl['SK_ESCOLA'] = np.arange(1, len(escola_tbl) + 1)
 
     return escola_tbl
 
 
 def load_dim_escola(dim_escola, conn):
     dim_escola.to_sql(name='D_ESCOLA', con=conn, schema='DW',
-                      if_exists='replace',
-                      index=False,
-                      chunksize=10)
+        if_exists='replace',
+        index=False,
+        chunksize=10)
 
 
 def run_dim_escola(conn):

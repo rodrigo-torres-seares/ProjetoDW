@@ -35,7 +35,7 @@ def treat_dim_turma(turma_tbl):
     turma_tbl['FL_SITUAÇÃO_CENSO'] = turma_tbl['FL_SITUAÇÃO_CENSO'].apply(lambda x: True
         if x == 1 else False)
 
-    turma_tbl['SK_TURMA'] = np.arange(1, len(turma_tbl))
+    turma_tbl['SK_TURMA'] = np.arange(1, len(turma_tbl) + 1)
 
     return turma_tbl
 

@@ -40,7 +40,7 @@ def treat_dim_localidade(localidade_tbl, estado_tbl):
     localidade_tbl = localidade_tbl.merge(estado_tbl, left_on='CD_ESTADO',
         right_on='CD_ESTADO')
 
-    localidade_tbl['SK_LOCALIDADE'] = np.arange(1, len(localidade_tbl))
+    localidade_tbl['SK_LOCALIDADE'] = np.arange(1, len(localidade_tbl) + 1)
     return localidade_tbl
 
 
