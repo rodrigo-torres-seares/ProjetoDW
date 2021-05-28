@@ -39,20 +39,18 @@ def load_dim_escola(dim_escola, conn):
     dim_escola.to_sql(name='D_ESCOLA', con=conn, schema='DW',
                       if_exists='replace',
                       index=False,
-                      chunksize=40)
+                      chunksize=10)
 
 
 def run_dim_escola(conn):
     start_time = time.time()
     escola_tbl = extract_dim_escola(conn)
     extract_time = time.time()
+    print('"D_ESCOLA" - extract: ', extract_time - start_time)
 
     dim_escola = treat_dim_escola(escola_tbl)
     treat_time = time.time()
-
+    print('treat: ', treat_time - extract_time)
     load_dim_escola(dim_escola, conn)
     load_time = time.time()
-
-    print('"D_ESCOLA" - extract: ', extract_time - start_time,
-          'treat: ', treat_time - extract_time,
-          'load: ', load_time - treat_time)
+    print('load: ', load_time - treat_time)
