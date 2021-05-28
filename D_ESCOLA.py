@@ -30,7 +30,7 @@ def treat_dim_escola(escola_tbl):
         'CD_LOCALIZAÇÃO'].apply(lambda x: 'Urbana' if x == 1 else
         'Rural' if x == 2 else -1)
 
-    escola_tbl['SK_ESCOLA'] = np.arange(0, len(escola_tbl))
+    escola_tbl['SK_ESCOLA'] = np.arange(1, len(escola_tbl))
 
     return escola_tbl
 
