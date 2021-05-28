@@ -1,56 +1,62 @@
-import STAGES as stg
 import time
 import pandas as pd
 import numpy as np
 
 
-def extract_dim_aluno(conn):
-    aluno_sql = '''
+def extract_dim_turma(conn):
+    turma_sql = '''
     select "ID_ALUNO", "ID_TURMA", "ID_SERIE", "ID_TURNO", "IN_SITUACAO_CENSO"
     FROM "STAGED".resultado_aluno
     '''
 
-    aluno_tbl = pd.read_sql_query(aluno_sql, conn)
+    turma_tbl = pd.read_sql_query(turma_sql, conn)
 
-    return aluno_tbl
+    return turma_tbl
 
 
-def treat_dim_aluno(aluno_tbl):
-    aluno_tbl = aluno_tbl.rename(columns={'ID_ALUNO': 'cd_aluno',
-                                          'ID_TURMA': 'cd_turma',
-                                          'ID_SERIE': 'cd_série',
-                                          'ID_TURNO': 'cd_turno',
-                                          'IN_SITUACAO_CENSO': 'fl_situação_censo'})
+def treat_dim_turma(turma_tbl):
+    turma_tbl = turma_tbl.rename(columns={'ID_ALUNO': 'CD_ALUNO',
+                                          'ID_TURMA': 'CD_TURMA',
+                                          'ID_SERIE': 'CD_SÉRIE',
+                                          'ID_TURNO': 'CD_TURNO',
+                                          'IN_SITUACAO_CENSO': 'FL_SITUAÇÃO_CENSO'})
 
-    aluno_tbl['cd_turno'] = aluno_tbl['cd_turno'].astype(int)
-    aluno_tbl['ds_turno'] = aluno_tbl['cd_turno'].apply(lambda x: 'Matutino' if x == 1 else
+    turma_tbl['CD_TURNO'] = turma_tbl['CD_TURNO'].apply(lambda x: -1 if x == ' ' else x)
+    turma_tbl['CD_TURNO'] = turma_tbl['CD_TURNO'].astype(int)
+    turma_tbl['DS_TURNO'] = turma_tbl['CD_TURNO'].apply(lambda x: 'Matutino' if x == 1 else
                                                 'Vespertino' if x == 2 else
                                                 'Noturno' if x == 3 else
-                                                'Intermediário' if x == 4 else
-                                                -1)
+                                                'Intermediário' if x == 4 else -1)
 
-    aluno_tbl['ds_série'] = aluno_tbl['cd_série'].apply(lambda x: '4ª série/5º ano EF'
-    if x == 5
-    else
-                                                '8ª série/9º ano EF' if x == 9 else
-                                                -1 )
+    turma_tbl['DS_SÉRIE'] = turma_tbl['CD_SÉRIE'].apply(lambda x: '4ª série/5º ano EF'
+        if x == 5 else '8ª série/9º ano EF'
+        if x == 9 else -1)
 
-    aluno_tbl['fl_situação_censo'] = list(map(lambda x: True if x == 1 else False,
-                                              aluno_tbl['fl_situação_censo']))
+    turma_tbl['FL_SITUAÇÃO_CENSO'] = turma_tbl['FL_SITUAÇÃO_CENSO'].apply(lambda x: True
+        if x == 1 else False)
 
-    return aluno_tbl
+    turma_tbl['sk_turma'] = np.arange(0, len(turma_tbl))
 
-
-def load_dim_aluno(dim_aluno, conn):
-    dim_aluno.to_sql(name='D_ALUNO', con=conn, schema='DW',
-                      if_exists='replace',
-                      index=False,
-                      chunksize=100)
+    return turma_tbl
 
 
-def run_dim_aluno(conn):
-    start = time.time()
-    aluno_tbl = extract_dim_aluno(conn)
-    dim_escola = treat_dim_aluno(aluno_tbl)
-    end = time.time()
-    # load_dim_aluno(dim_escola, conn)
+def load_dim_turma(dim_turma, conn):
+    dim_turma.to_sql(name='D_TURMA', con=conn, schema='DW',
+        if_exists='replace',
+        index=False,
+        chunksize=100)
+
+
+def run_dim_turma(conn):
+    start_time = time.time()
+    turma_tbl = extract_dim_turma(conn)
+    extract_time = time.time()
+    print('"D_LOCALIDADE" - extract: ', extract_time - start_time)
+
+    dim_turma = treat_dim_turma(turma_tbl)
+    treat_time = time.time()
+    print('treat: ', treat_time - extract_time)
+
+    load_dim_turma(dim_turma, conn)
+    load_time = time.time()
+    print('load: ', load_time - treat_time)
