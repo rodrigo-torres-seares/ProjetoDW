@@ -64,3 +64,5 @@ def run_dim_localidade(conn_output):
     load_dim_localidade(dim_localidade, conn_output)
     load_time = time.time()
     print('load: ', load_time - treat_time)
+
+    return load_time - start_time

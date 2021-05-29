@@ -41,17 +41,18 @@ def treat_dim_turma(turma_tbl):
 
 
 def load_dim_turma(dim_turma, conn):
-    dim_turma.to_sql(name='D_TURMA', con=conn, schema='DW',
-        if_exists='replace',
-        index=False,
-        chunksize=100)
+    for i in (0, 10):
+        dim_turma.loc[i*(len(dim_turma)/10):
+                        (i+1)*(len(dim_turma)/10)].to_sql(
+                        name='D_TURMA', con=conn, schema='DW',
+                        if_exists='replace', index=False, chunksize=100)
 
 
 def run_dim_turma(conn):
     start_time = time.time()
     turma_tbl = extract_dim_turma(conn)
     extract_time = time.time()
-    print('"D_LOCALIDADE" - extract: ', extract_time - start_time)
+    print('"D_TURMA" - extract: ', extract_time - start_time)
 
     dim_turma = treat_dim_turma(turma_tbl)
     treat_time = time.time()
@@ -60,3 +61,5 @@ def run_dim_turma(conn):
     load_dim_turma(dim_turma, conn)
     load_time = time.time()
     print('load: ', load_time - treat_time)
+
+    return load_time - start_time

@@ -54,3 +54,5 @@ def run_dim_escola(conn):
     load_dim_escola(dim_escola, conn)
     load_time = time.time()
     print('load: ', load_time - treat_time)
+
+    return load_time - start_time
