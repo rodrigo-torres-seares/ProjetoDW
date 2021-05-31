@@ -55,14 +55,14 @@ def run_dim_localidade(conn_output):
     start_time = time.time()
     município_tbl, estado_tbl = extract_dim_localidade(conn_output)
     extract_time = time.time()
-    print('"D_LOCALIDADE" - extract: ', extract_time - start_time)
+    print(f'D_LOCALIDADE\nextract: {extract_time - start_time:.3f}')
 
     dim_localidade = treat_dim_localidade(município_tbl, estado_tbl)
     treat_time = time.time()
-    print('treat: ', treat_time - extract_time)
+    print(f'treat: {treat_time - extract_time:.3f}')
 
     load_dim_localidade(dim_localidade, conn_output)
     load_time = time.time()
-    print('load: ', load_time - treat_time)
+    print(f'load: {load_time - treat_time:.3f}')
 
     return load_time - start_time

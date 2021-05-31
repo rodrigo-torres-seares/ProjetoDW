@@ -46,13 +46,14 @@ def run_dim_escola(conn):
     start_time = time.time()
     escola_tbl = extract_dim_escola(conn)
     extract_time = time.time()
-    print('"D_ESCOLA" - extract: ', extract_time - start_time)
+    print(f'D_ESCOLA\nextract: {extract_time - start_time:.3f}', )
 
     dim_escola = treat_dim_escola(escola_tbl)
     treat_time = time.time()
-    print('treat: ', treat_time - extract_time)
+    print(f'treat: {treat_time - extract_time:.3f}', )
+
     load_dim_escola(dim_escola, conn)
     load_time = time.time()
-    print('load: ', load_time - treat_time)
+    print(f'load: {load_time - treat_time:.3f}')
 
     return load_time - start_time
