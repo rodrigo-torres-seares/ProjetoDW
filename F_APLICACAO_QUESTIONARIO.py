@@ -1,4 +1,6 @@
+import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import time
 
 def extract_fact_aplicacao_questionario(conn):
@@ -35,16 +37,15 @@ def extract_fact_aplicacao_questionario(conn):
     return localidade_tbl, escola_tbl, turma_tbl, questionario_tbl
 
 
-def treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl, turma_tbl,
-                                     questionario_tbl):
+def treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl, turma_tbl, questionario_tbl):
     questionario_tbl = questionario_tbl.merge(localidade_tbl, left_on="ID_MUNICIPIO",
-                               right_on="CD_MUNICÍPIO")
+                                                right_on="CD_MUNICÍPIO")
 
     questionario_tbl = questionario_tbl.merge(escola_tbl, left_on="ID_ESCOLA",
-                                            right_on="CD_ESCOLA")
+                                                right_on="CD_ESCOLA")
 
     questionario_tbl = questionario_tbl.merge(turma_tbl, left_on="ID_ALUNO",
-                                            right_on="CD_ALUNO")
+                                                right_on="CD_ALUNO")
 
     del questionario_tbl['ID_ALUNO']
     del questionario_tbl['ID_MUNICIPIO']
@@ -54,12 +55,12 @@ def treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl, turma_tbl,
     del questionario_tbl['CD_MUNICÍPIO']
 
     questionario_tbl = questionario_tbl.rename(columns={'ID_PROVA_BRASIL': 'CD_ANO',
-         'IN_PREENCHIMENTO': 'FL_PREENCHIMENTO',
-         'IN_PROFICIENCIA': 'FL_PROFICIÊNCIA',
-         'PROFICIENCIA_LP_SAEB': 'VL_PROFICIÊNCIA_LÍNGUA_PORTUGUESA_SAEB',
-         'DESVIO_PADRAO_LP_SAEB': 'VL_DESVIO_PADRAO_LÍNGUA_PORTUGUESA_SAEB',
-         'PROFICIENCIA_MT_SAEB': 'VL_PROFICIÊNCIA_MATEMÁTICA_SAEB',
-         'DESVIO_PADRAO_MT_SAEB': 'VL_DESVIO_PADRAO_MATEMÁTICA_SAEB'})
+                    'IN_PREENCHIMENTO': 'FL_PREENCHIMENTO',
+                    'IN_PROFICIENCIA': 'FL_PROFICIÊNCIA',
+                    'PROFICIENCIA_LP_SAEB': 'VL_PROFICIÊNCIA_LÍNGUA_PORTUGUESA_SAEB',
+                    'DESVIO_PADRAO_LP_SAEB': 'VL_DESVIO_PADRAO_LÍNGUA_PORTUGUESA_SAEB',
+                    'PROFICIENCIA_MT_SAEB': 'VL_PROFICIÊNCIA_MATEMÁTICA_SAEB',
+                    'DESVIO_PADRAO_MT_SAEB': 'VL_DESVIO_PADRAO_MATEMÁTICA_SAEB'})
 
     questionario_tbl['FL_PROFICIÊNCIA'] = questionario_tbl['FL_PROFICIÊNCIA'].apply(lambda x: True
             if x == 1 else False)
@@ -93,31 +94,33 @@ def treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl, turma_tbl,
 
     return questionario_tbl
 
-def load_fact_aplicacao_quetionario(fact_aplicacao_questionario, conn):
-        fact_aplicacao_questionario = fact_aplicacao_questionario.grc
-        fact_aplicacao_questionario.loc[temp: temp2].to_sql(
-                            name='F_APLICAÇÃO_QUESTIONARIO', con=conn, schema='DW',
-                            if_exists='replace', index=False, chunksize=100)
 
+def load_fact_aplicacao_quetionario(fact_aplicacao_questionario, conn):
+    divisor = 50
+    df = np.array_split(fact_aplicacao_questionario, divisor)
+    print("Load da Dimensão Turma: \n")
+    for i in tqdm(range(0, divisor)):
+        if i != 0:
+            df[i].to_sql(name='F_APLICAÇÃO_QUESTIONARIO', con=conn, schema='DW',
+                            if_exists='append', index=False)
+        else:
+            df[i].to_sql(name='F_APLICAÇÃO_QUESTIONARIO', con=conn, schema='DW',
+                            if_exists='replace', index=False)
 
 
 def run_fact_aplicacao_questionario(conn):
     start_time = time.time()
-    localidade_tbl, escola_tbl, turma_tbl, questionario_tbl = \
-        extract_fact_aplicacao_questionario(conn)
-
+    localidade_tbl, escola_tbl, turma_tbl, questionario_tbl = extract_fact_aplicacao_questionario(conn)
     extract_time = time.time()
-    print('"F_Questionario" - extract: ', extract_time - start_time)
+    print(f'F_Questionario\nextract: {extract_time - start_time:.3f}')
 
-    fact_questionario = treat_fact_aplicacao_questionario(localidade_tbl,
-        escola_tbl,
-        turma_tbl,
-        questionario_tbl)
+    fact_questionario = treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl,
+                                                            turma_tbl, questionario_tbl)
     treat_time = time.time()
-    print('treat: ', treat_time - extract_time)
+    print(f'treat: {treat_time - extract_time:.3f}')
 
     load_fact_aplicacao_quetionario(fact_questionario, conn)
     load_time = time.time()
-    print('load: ', load_time - treat_time)
+    print(f'load: {load_time - treat_time:.3f}', )
 
     return load_time - start_time
