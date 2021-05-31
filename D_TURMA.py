@@ -34,10 +34,25 @@ def treat_dim_turma(turma_tbl):
         if x == 5 else '8ª série/9º ano EF'
         if x == 9 else -1)
 
-    turma_tbl['FL_SITUAÇÃO_CENSO'] = turma_tbl['FL_SITUAÇÃO_CENSO'].apply(lambda x: True
-        if x == 1 else False)
+    turma_tbl['FL_SITUAÇÃO_CENSO'] = turma_tbl['FL_SITUAÇÃO_CENSO'].apply(lambda x: -1
+        if x == 1 else 0)
 
     turma_tbl['SK_TURMA'] = np.arange(1, len(turma_tbl) + 1)
+
+    turma_tbl = pd.concat([pd.DataFrame(
+        [[-1, -1, -1, -1, -1, "Não informado", "Não informado", -1],
+         [-2, -2, -2, -2, -2, "Não aplicável", "Não aplicável", -2],
+         [-3, -3, -3, -3, -3, "Desconhecido", "Desconhecido", -3]],
+        columns=[
+            'CD_ALUNO', 'CD_TURMA', 'CD_SÉRIE', 'CD_TURNO',
+            'FL_SITUAÇÃO_CENSO', 'DS_TURNO', 'DS_SÉRIE', 'SK_TURMA']),
+        turma_tbl], ignore_index=True
+    )
+
+    ordemturma = ['SK_TURMA', 'CD_ALUNO', 'CD_TURMA', 'CD_SÉRIE', 'DS_SÉRIE',
+                  'CD_TURNO',  'DS_TURNO', 'FL_SITUAÇÃO_CENSO']
+
+    turma_tbl = turma_tbl[ordemturma]
 
     return turma_tbl
 

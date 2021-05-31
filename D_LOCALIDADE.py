@@ -41,6 +41,23 @@ def treat_dim_localidade(localidade_tbl, estado_tbl):
         right_on='CD_ESTADO')
 
     localidade_tbl['SK_LOCALIDADE'] = np.arange(1, len(localidade_tbl) + 1)
+
+    localidade_tbl = pd.concat([pd.DataFrame(
+        [[-1, "Não informado", -1, "Não informado", "Não informado", -1],
+         [-2, "Não aplicável", -2, "Não aplicável", "Não aplicável", -2],
+         [-3, "Desconhecido", -3, "Desconhecido", "Desconhecido", -3]],
+        columns=[
+            'CD_MUNICÍPIO', 'NO_MUNICÍPIO', 'CD_ESTADO', 'NO_ESTADO',
+            'NO_UF', 'SK_LOCALIDADE']),
+        localidade_tbl], ignore_index=True
+    )
+
+    ordemcolunas = ['SK_LOCALIDADE', 'CD_MUNICÍPIO', 'NO_MUNICÍPIO', 'CD_ESTADO',
+                    'NO_ESTADO', 'NO_UF']
+
+    localidade_tbl = localidade_tbl[ordemcolunas]
+
+
     return localidade_tbl
 
 

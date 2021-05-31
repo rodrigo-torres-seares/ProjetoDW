@@ -92,19 +92,25 @@ def treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl, turma_tbl, que
     questionario_tbl['VL_PROFICIÊNCIA_LÍNGUA_PORTUGUESA_SAEB'] = pd.to_numeric(
         questionario_tbl['VL_PROFICIÊNCIA_LÍNGUA_PORTUGUESA_SAEB'], errors='coerce')
 
+    ordemcolunas = ['SK_TURMA', 'SK_ESCOLA', 'SK_LOCALIDADE', 'CD_ANO', 'FL_PREENCHIMENTO',
+                    'FL_PROFICIÊNCIA','VL_DESVIO_PADRAO_MATEMÁTICA_SAEB', 'VL_PROFICIÊNCIA_MATEMÁTICA_SAEB',
+                    'VL_DESVIO_PADRAO_LÍNGUA_PORTUGUESA_SAEB', 'VL_PROFICIÊNCIA_LÍNGUA_PORTUGUESA_SAEB']
+
+    questionario_tbl = questionario_tbl[ordemcolunas]
+
     return questionario_tbl
 
 
 def load_fact_aplicacao_quetionario(fact_aplicacao_questionario, conn):
     divisor = 50
     df = np.array_split(fact_aplicacao_questionario, divisor)
-    print("Load da Dimensão Turma: \n")
+    print("Load da Fato Questionário: \n")
     for i in tqdm(range(0, divisor)):
         if i != 0:
-            df[i].to_sql(name='F_APLICAÇÃO_QUESTIONARIO', con=conn, schema='DW',
+            df[i].to_sql(name='F_APLICAÇÃO_QUESTIONÁRIO', con=conn, schema='DW',
                             if_exists='append', index=False)
         else:
-            df[i].to_sql(name='F_APLICAÇÃO_QUESTIONARIO', con=conn, schema='DW',
+            df[i].to_sql(name='F_APLICAÇÃO_QUESTIONÁRIO', con=conn, schema='DW',
                             if_exists='replace', index=False)
 
 
@@ -112,7 +118,7 @@ def run_fact_aplicacao_questionario(conn):
     start_time = time.time()
     localidade_tbl, escola_tbl, turma_tbl, questionario_tbl = extract_fact_aplicacao_questionario(conn)
     extract_time = time.time()
-    print(f'F_Questionario\nextract: {extract_time - start_time:.3f}')
+    print(f'F_Aplicação_Questionário\nextract: {extract_time - start_time:.3f}')
 
     fact_questionario = treat_fact_aplicacao_questionario(localidade_tbl, escola_tbl,
                                                             turma_tbl, questionario_tbl)
