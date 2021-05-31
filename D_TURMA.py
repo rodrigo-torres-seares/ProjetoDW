@@ -1,6 +1,7 @@
 import time
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 
 
 def extract_dim_turma(conn):
@@ -23,10 +24,11 @@ def treat_dim_turma(turma_tbl):
 
     turma_tbl['CD_TURNO'] = turma_tbl['CD_TURNO'].apply(lambda x: -1 if x == ' ' else x)
     turma_tbl['CD_TURNO'] = turma_tbl['CD_TURNO'].astype(int)
-    turma_tbl['DS_TURNO'] = turma_tbl['CD_TURNO'].apply(lambda x: 'Matutino' if x == 1 else
-                                                'Vespertino' if x == 2 else
-                                                'Noturno' if x == 3 else
-                                                'Intermediário' if x == 4 else -1)
+    turma_tbl['DS_TURNO'] = turma_tbl['CD_TURNO'].apply(
+        lambda x: 'Matutino' if x == 1 else
+        'Vespertino' if x == 2 else
+        'Noturno' if x == 3 else
+        'Intermediário' if x == 4 else -1)
 
     turma_tbl['DS_SÉRIE'] = turma_tbl['CD_SÉRIE'].apply(lambda x: '4ª série/5º ano EF'
         if x == 5 else '8ª série/9º ano EF'
@@ -41,25 +43,31 @@ def treat_dim_turma(turma_tbl):
 
 
 def load_dim_turma(dim_turma, conn):
-    for i in (0, 10):
-        dim_turma.loc[i*(len(dim_turma)/10):
-                        (i+1)*(len(dim_turma)/10)].to_sql(
-                        name='D_TURMA', con=conn, schema='DW',
-                        if_exists='replace', index=False, chunksize=100)
+    divisor = 50
+    df = np.array_split(dim_turma, divisor)
+    print("Load da Dimensão Turma: \n")
+    for i in tqdm(range(0, divisor)):
+        if i != 0:
+            df[i].to_sql(name='D_TURMA', con=conn, schema='DW',
+                         if_exists='append', index=False)
+
+        else:
+            df[i].to_sql(name='D_TURMA', con=conn, schema='DW',
+                         if_exists='replace', index=False)
 
 
 def run_dim_turma(conn):
     start_time = time.time()
     turma_tbl = extract_dim_turma(conn)
     extract_time = time.time()
-    print('"D_TURMA" - extract: ', extract_time - start_time)
+    print(f'D_TURMA\nextract: {extract_time - start_time:.3f}')
 
     dim_turma = treat_dim_turma(turma_tbl)
     treat_time = time.time()
-    print('treat: ', treat_time - extract_time)
+    print(f'treat: {treat_time - extract_time:.3f}')
 
     load_dim_turma(dim_turma, conn)
     load_time = time.time()
-    print('load: ', load_time - treat_time)
+    print(f'load: {load_time - treat_time:.3f}')
 
     return load_time - start_time
