@@ -18,23 +18,21 @@ coding = 'utf8'
 #
 # stg.create_stg_tables_from_csv('Datasets/DADOS_IBGE.csv', ';', connection_postgre,
 #                                coding, 'dados_ibge')
-
+#
 start_time = time.time()
-print(f"Tempo total D_LOCALIDADE: {D_LOCALIDADE.run_dim_localidade(connection_postgre):.4f}",
-      "\n\n---------------------------------------------------------------------------\n")
+# print(f"Tempo total D_LOCALIDADE: {D_LOCALIDADE.run_dim_localidade(connection_postgre):.4f}",
+#       "\n\n---------------------------------------------------------------------------\n")
+#
+# D_ESCOLA.run_dim_escola(connection_postgre)
+#
+# D_TURMA.run_dim_turma(connection_postgre)
+#       "\n\n---------------------------------------------------------------------------\n")
 
-print(f"Tempo total D_ESCOLA: {D_ESCOLA.run_dim_escola(connection_postgre):.4f}",
-      "\n\n---------------------------------------------------------------------------\n")
-
-print(f"Tempo total D_TURMA: {D_TURMA.run_dim_turma(connection_postgre):.4f}",
-      "\n\n---------------------------------------------------------------------------\n")
-
-print(f"Tempo total F_Aplicação_Questionário: "
-    f"{F_APLICACAO_QUESTIONARIO.run_fact_aplicacao_questionario(connection_postgre):.4f}",
-    "\n\n-----------------------------------------------------------------------------\n")
-
+F_APLICACAO_QUESTIONARIO.run_fact_aplicacao_questionario(connection_postgre)
+#
 end_time = time.time()
 print(f"\nBanco atualizado em : {end_time - start_time:.2f} segundos")
+
 
 
 """

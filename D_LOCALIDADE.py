@@ -1,80 +1,105 @@
 import pandas as pd
 import numpy as np
+import STAGES as stg
 import time
 
 
 def extract_dim_localidade(conn):
-    municipio_sql = '''
-        select "Cód.", "Brasil Grande Região Unidade da Federação e Município"
-        FROM "STAGED".dados_ibge WHERE "Nível" LIKE 'MU'
-        '''
+    nivel_mu = "'MU'"
+    nivel_uf = "'UF'"
 
-    estado_sql = '''
-        select "Cód.", "Brasil Grande Região Unidade da Federação e Município"
-        FROM "STAGED".dados_ibge WHERE "Nível" LIKE 'UF'
-        '''
+    municipio_tbl = stg.read_table_postgres(conn,
+                                            schema='STAGED',
+                                            table_name='dados_ibge',
+                                            columns=["Cód.",
+                                                     "Brasil Grande Região Unidade da Federação e Município"],
+                                            where=f'"Nível" LIKE {nivel_mu}'
+                                            )
 
-    municipio_tbl = pd.read_sql_query(municipio_sql, conn)
-
-    estado_tbl = pd.read_sql_query(estado_sql, conn)
+    estado_tbl = stg.read_table_postgres(conn,
+                                         schema='STAGED',
+                                         table_name='dados_ibge',
+                                         columns=["Cód.",
+                                                  "Brasil Grande Região Unidade da Federação e Município"],
+                                         where=f'"Nível" LIKE {nivel_uf}'
+                                         )
 
     return municipio_tbl, estado_tbl
 
 
-def treat_dim_localidade(localidade_tbl, estado_tbl):
-    localidade_tbl = localidade_tbl.rename(columns={'Cód.': 'CD_MUNICÍPIO',
-        'Brasil Grande Região Unidade da Federação e Município': 'NO_MUNICÍPIO'})
+def treat_tbl_municipio(tbl):
+    tbl_municipio = (
+        tbl.rename(columns={'Cód.': 'CD_MUNICÍPIO',
+                            'Brasil Grande Região Unidade da Federação e Município': 'NO_MUNICÍPIO'}
+        ).assign(
+                    NO_UF=lambda x: x.NO_MUNICÍPIO.apply(lambda y: y[-3:-1]),
+                    NO_MUNICÍPIO=lambda x: x.NO_MUNICÍPIO.apply(lambda y: y[:-5]),
+                    CD_MUNICÍPIO=lambda x: x.CD_MUNICÍPIO.astype(str),
+                    CD_ESTADO=lambda x: x.CD_MUNICÍPIO.apply(lambda y: y[:2]),
+        )
+    )
 
-    estado_tbl = estado_tbl.rename(columns={'Cód.': 'CD_ESTADO',
-        'Brasil Grande Região Unidade da Federação e Município': 'NO_ESTADO'})
+    return tbl_municipio
 
-    localidade_tbl['NO_UF'] = localidade_tbl['NO_MUNICÍPIO'].apply(lambda x: x[-3:-1])
 
-    localidade_tbl['NO_MUNICÍPIO'] = localidade_tbl['NO_MUNICÍPIO'].apply(lambda x: x[:-5])
+def treat_tbl_estado(tbl):
+    tbl_estado = (
+        tbl.rename(columns={'Cód.': 'CD_ESTADO',
+                            'Brasil Grande Região Unidade da Federação e Município': 'NO_ESTADO'}
+        )
+    )
 
-    localidade_tbl['CD_MUNICÍPIO'] = localidade_tbl['CD_MUNICÍPIO'].astype(str)
-    localidade_tbl['CD_ESTADO'] = localidade_tbl['CD_MUNICÍPIO'].apply(lambda x: x[:2])
-    localidade_tbl['CD_MUNICÍPIO'] = localidade_tbl['CD_MUNICÍPIO'].astype(int)
-    localidade_tbl['CD_ESTADO'] = localidade_tbl['CD_ESTADO'].astype(int)
+    return tbl_estado
 
-    localidade_tbl = localidade_tbl.merge(estado_tbl, left_on='CD_ESTADO',
-        right_on='CD_ESTADO')
 
-    localidade_tbl['SK_LOCALIDADE'] = np.arange(1, len(localidade_tbl) + 1)
+def treat_dim_localidade(municipio_tbl, estado_tbl):
+    dim_localidade = (
+                municipio_tbl.assign(
+                    CD_MUNICÍPIO=lambda x: x.CD_MUNICÍPIO.astype("int64"),
+                    CD_ESTADO=lambda x: x.CD_ESTADO.apply("int64")
+                ).merge(estado_tbl, left_on='CD_ESTADO', right_on='CD_ESTADO'
+        )
+    )
+    print(dim_localidade)
+    dim_localidade['SK_LOCALIDADE'] = np.arange(1, len(dim_localidade) + 1)
 
-    localidade_tbl = pd.concat([pd.DataFrame(
-        [[-1, "Não informado", -1, "Não informado", "Não informado", -1],
-         [-2, "Não aplicável", -2, "Não aplicável", "Não aplicável", -2],
-         [-3, "Desconhecido", -3, "Desconhecido", "Desconhecido", -3]],
-        columns=[
+    dim_localidade = pd.concat(
+        [pd.DataFrame([
+            [-1, "Não informado", -1, "Não informado", "Não informado", -1],
+            [-2, "Não aplicável", -2, "Não aplicável", "Não aplicável", -2],
+            [-3, "Desconhecido", -3, "Desconhecido", "Desconhecido", -3]],
+            columns=[
             'CD_MUNICÍPIO', 'NO_MUNICÍPIO', 'CD_ESTADO', 'NO_ESTADO',
             'NO_UF', 'SK_LOCALIDADE']),
-        localidade_tbl], ignore_index=True
+            dim_localidade], ignore_index=True
     )
 
     ordemcolunas = ['SK_LOCALIDADE', 'CD_MUNICÍPIO', 'NO_MUNICÍPIO', 'CD_ESTADO',
                     'NO_ESTADO', 'NO_UF']
 
-    localidade_tbl = localidade_tbl[ordemcolunas]
+    dim_localidade = dim_localidade[ordemcolunas]
 
-
-    return localidade_tbl
+    return dim_localidade
 
 
 def load_dim_localidade(dim_localidade, conn):
     dim_localidade.to_sql(name='D_LOCALIDADE', con=conn, schema='DW',
-        if_exists='replace',
-        index=False,
-        chunksize=40)
+                          if_exists='replace',
+                          index=False,
+                          chunksize=40)
 
 
 def run_dim_localidade(conn_output):
     start_time = time.time()
-    município_tbl, estado_tbl = extract_dim_localidade(conn_output)
+    municipio_tbl, estado_tbl = extract_dim_localidade(conn_output)
     extract_time = time.time()
     print(f'D_LOCALIDADE\nextract: {extract_time - start_time:.3f}')
 
-    dim_localidade = treat_dim_localidade(município_tbl, estado_tbl)
+    municipio_tbl = treat_tbl_municipio(municipio_tbl)
+    print(municipio_tbl)
+    estado_tbl = treat_tbl_estado(estado_tbl)
+    print(estado_tbl)
+    dim_localidade = treat_dim_localidade(municipio_tbl, estado_tbl)
     treat_time = time.time()
     print(f'treat: {treat_time - extract_time:.3f}')
 
