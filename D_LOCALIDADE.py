@@ -39,9 +39,16 @@ def treat_dim_localidade(localidade_tbl, estado_tbl):
 
     localidade_tbl = localidade_tbl.merge(estado_tbl, left_on='CD_ESTADO',
         right_on='CD_ESTADO')
+     #Nessa função temos alguns pontos :
+    #Depois da uma olhada no meu código pra ver a forma que foi feito para podermos padronizar os próximos projetos .
+    #Essa parte de tratamento podemos deixar mais "limpo" usando assign e Method Chaining
+    #tem exemplos no meu código e nesse site https://tomaugspurger.github.io/method-chaining.html
 
+    
+    
     localidade_tbl['SK_LOCALIDADE'] = np.arange(1, len(localidade_tbl) + 1)
-
+    
+    
     localidade_tbl = pd.concat([pd.DataFrame(
         [[-1, "Não informado", -1, "Não informado", "Não informado", -1],
          [-2, "Não aplicável", -2, "Não aplicável", "Não aplicável", -2],
