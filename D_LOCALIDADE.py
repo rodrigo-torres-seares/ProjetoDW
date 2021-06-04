@@ -17,6 +17,8 @@ def extract_dim_localidade(conn):
     municipio_tbl = pd.read_sql_query(municipio_sql, conn)
 
     estado_tbl = pd.read_sql_query(estado_sql, conn)
+    
+    #No próximo projeto iremos usar o DW_TOOLS para fazer essas leituras. Dá uma olhada no código do meu git.
 
     return municipio_tbl, estado_tbl
 
@@ -51,6 +53,12 @@ def treat_dim_localidade(localidade_tbl, estado_tbl):
             'NO_UF', 'SK_LOCALIDADE']),
         localidade_tbl], ignore_index=True
     )
+    
+    
+    #Nessa função temos alguns pontos :
+    #Depois da uma olhada no meu código pra ver a forma que foi feito para podermos padronizar os próximos projetos .
+    #Essa parte de tratamento podemos deixar mais "limpo" usando assign e Method Chaining
+    #tem exemplos no meu código e nesse site https://tomaugspurger.github.io/method-chaining.html
 
     ordemcolunas = ['SK_LOCALIDADE', 'CD_MUNICÍPIO', 'NO_MUNICÍPIO', 'CD_ESTADO',
                     'NO_ESTADO', 'NO_UF']
@@ -83,3 +91,5 @@ def run_dim_localidade(conn_output):
     print(f'load: {load_time - treat_time:.3f}')
 
     return load_time - start_time
+
+    #Aqui podemos usuar o pipe para simplificar o código, dá uma olhada para ser aplicado nos próximos projetos
